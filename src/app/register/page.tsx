@@ -9,9 +9,10 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useAuth } from "../context/AuthContext";
 
-export default function LoginPage() {
-  const { login } = useAuth();
+export default function RegisterPage() {
+  const { register } = useAuth();
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,10 +23,10 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
+      await register(name, email, password);
       router.push("/dashboard");
     } catch {
-      setError("Correo o contraseña incorrectos");
+      setError("No se pudo crear la cuenta. ¿Ya existe ese correo?");
     } finally {
       setLoading(false);
     }
@@ -39,9 +40,15 @@ export default function LoginPage() {
       sx={{ maxWidth: 360, mx: "auto", mt: 10 }}
     >
       <Typography variant="h5" align="center">
-        Iniciar sesión
+        Crear cuenta
       </Typography>
       {error && <Alert severity="error">{error}</Alert>}
+      <TextField
+        label="Nombre completo"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+      />
       <TextField
         label="Correo electrónico"
         type="email"
@@ -57,7 +64,7 @@ export default function LoginPage() {
         required
       />
       <Button type="submit" variant="contained" disabled={loading}>
-        {loading ? <CircularProgress size={24} /> : "Entrar"}
+        {loading ? <CircularProgress size={24} /> : "Registrarme"}
       </Button>
     </Stack>
   );

@@ -9,6 +9,7 @@ import Dialog from "@mui/material/Dialog";
 import Box from "@mui/material/Box";
 import theme from "./theme";
 import Sidebar from "./components/sidebar";
+import { AuthProvider } from "@/app/context/AuthContext";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],

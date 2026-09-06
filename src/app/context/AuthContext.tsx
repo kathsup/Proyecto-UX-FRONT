@@ -12,6 +12,11 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function decodeToken(token: string): User {
+  const payload = token.split(".")[1];
+  return JSON.parse(atob(payload));
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
@@ -20,8 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    localStorage.setItem("token", data.access_token);
-    setUser(data.user);
+    localStorage.setItem("token", data.token);
+    setUser(decodeToken(data.token));
   }
 
   async function register(name: string, email: string, password: string) {
