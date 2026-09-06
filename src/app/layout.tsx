@@ -10,6 +10,7 @@ import Box from "@mui/material/Box";
 import theme from "./theme";
 import Sidebar from "./components/sidebar";
 import { AuthProvider } from "@/app/context/AuthContext";
+import { HabitForm } from "./components/forms/habitForm";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -53,7 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 open={createModalOpen}
                 onClose={() => setCreateModalOpen(false)}
               >
-                {/* form de crear hábito, próximo paso */}
+                {<HabitForm onSuccess={() => setCreateModalOpen(false)} />}
               </Dialog>
             </AuthProvider>
           </ThemeProvider>
