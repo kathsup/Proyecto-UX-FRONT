@@ -8,6 +8,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  initializing: boolean; //proteger
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -19,6 +20,19 @@ function decodeToken(token: string): User {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [initializing, setInitializing] = useState(true); //agregado para proteger ruta
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        setUser(decodeToken(token));
+      } catch {
+        localStorage.removeItem("token");
+      }
+    }
+    setInitializing(false);
+  }, []);
 
   async function login(email: string, password: string) {
     const data = await apiFetch("/auth/login", {
@@ -43,7 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    //proteger
+    <AuthContext.Provider
+      value={{ user, login, register, logout, initializing }}
+    >
       {children}
     </AuthContext.Provider>
   );
