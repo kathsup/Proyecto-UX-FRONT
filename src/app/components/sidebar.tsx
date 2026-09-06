@@ -6,6 +6,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Box from "@mui/material/Box";
 import Avatar from "@mui/material/Avatar";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const DRAWER_WIDTH = 220;
 
@@ -21,6 +22,7 @@ export default function Sidebar({
 }: {
   onCreateClick: () => void;
 }) {
+  const pathname = usePathname();
   return (
     <Drawer
       variant="permanent"
@@ -35,7 +37,12 @@ export default function Sidebar({
           <ListItemText primary="+" />
         </ListItemButton>
         {navItems.map((item) => (
-          <ListItemButton key={item.href} component={Link} href={item.href}>
+          <ListItemButton
+            key={item.href}
+            component={Link}
+            href={item.href}
+            selected={pathname === item.href}
+          >
             <ListItemText primary={item.label} />
           </ListItemButton>
         ))}
