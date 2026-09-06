@@ -8,25 +8,40 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useAuth } from "../context/AuthContext";
+import { registerSchema } from "../lib/validations/auth";
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function validate() {
+    const result = registerSchema.safeParse(form);
+    if (!result.success) {
+      const newErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) newErrors[String(issue.path[0])] = issue.message;
+      });
+      setErrors(newErrors);
+      return false;
+    }
+    setErrors({});
+    return true;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setApiError("");
+    if (!validate()) return;
     setLoading(true);
     try {
-      await register(name, email, password);
+      await register(form.name, form.email, form.password);
       router.push("/dashboard");
     } catch {
-      setError("No se pudo crear la cuenta. ¿Ya existe ese correo?");
+      setApiError("No se pudo crear la cuenta. ¿Ya existe ese correo?");
     } finally {
       setLoading(false);
     }
@@ -42,26 +57,28 @@ export default function RegisterPage() {
       <Typography variant="h5" align="center">
         Crear cuenta
       </Typography>
-      {error && <Alert severity="error">{error}</Alert>}
+      {apiError && <Alert severity="error">{apiError}</Alert>}
       <TextField
         label="Nombre completo"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        error={!!errors.name}
+        helperText={errors.name}
       />
       <TextField
         label="Correo electrónico"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
+        value={form.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        error={!!errors.email}
+        helperText={errors.email}
       />
       <TextField
         label="Contraseña"
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
+        value={form.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        error={!!errors.password}
+        helperText={errors.password}
       />
       <Button type="submit" variant="contained" disabled={loading}>
         {loading ? <CircularProgress size={24} /> : "Registrarme"}

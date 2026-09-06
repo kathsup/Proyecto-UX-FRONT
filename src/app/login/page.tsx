@@ -8,24 +8,40 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useAuth } from "../context/AuthContext";
+import { loginSchema } from "../lib/validations/auth";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function validate() {
+    const result = loginSchema.safeParse(form);
+    if (!result.success) {
+      const newErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) newErrors[String(issue.path[0])] = issue.message;
+      });
+      setErrors(newErrors);
+      return false;
+    }
+    setErrors({});
+    return true;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setApiError("");
+    if (!validate()) return;
     setLoading(true);
     try {
-      await login(email, password);
+      await login(form.email, form.password);
       router.push("/dashboard");
     } catch {
-      setError("Correo o contraseña incorrectos");
+      setApiError("Correo o contraseña incorrectos");
     } finally {
       setLoading(false);
     }
@@ -41,20 +57,21 @@ export default function LoginPage() {
       <Typography variant="h5" align="center">
         Iniciar sesión
       </Typography>
-      {error && <Alert severity="error">{error}</Alert>}
+      {apiError && <Alert severity="error">{apiError}</Alert>}
       <TextField
         label="Correo electrónico"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
+        value={form.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        error={!!errors.email}
+        helperText={errors.email}
       />
       <TextField
         label="Contraseña"
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
+        value={form.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        error={!!errors.password}
+        helperText={errors.password}
       />
       <Button type="submit" variant="contained" disabled={loading}>
         {loading ? <CircularProgress size={24} /> : "Entrar"}
