@@ -39,20 +39,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
-            <Box sx={{ display: "flex" }}>
-              {showSidebar && (
-                <Sidebar onCreateClick={() => setCreateModalOpen(true)} />
-              )}
-              <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                {children}
+            <AuthProvider>
+              <Box sx={{ display: "flex" }}>
+                {showSidebar && (
+                  <Sidebar onCreateClick={() => setCreateModalOpen(true)} />
+                )}
+                <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                  {children}
+                </Box>
               </Box>
-            </Box>
-            <Dialog
-              open={createModalOpen}
-              onClose={() => setCreateModalOpen(false)}
-            >
-              {/* form de crear hábito, próximo paso */}
-            </Dialog>
+              <Dialog
+                open={createModalOpen}
+                onClose={() => setCreateModalOpen(false)}
+              >
+                {/* form de crear hábito, próximo paso */}
+              </Dialog>
+            </AuthProvider>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>
