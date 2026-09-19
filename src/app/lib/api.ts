@@ -1,7 +1,7 @@
 const API_URL = "http://localhost:3000"; // o el puerto del backend NestJS
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {

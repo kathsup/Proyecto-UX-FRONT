@@ -23,12 +23,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [initializing, setInitializing] = useState(true); //agregado para proteger ruta
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       try {
         setUser(decodeToken(token));
       } catch {
-        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
       }
     }
     setInitializing(false);
@@ -39,7 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    localStorage.setItem("token", data.token);
+    console.log("login con sessionStorage");
+    sessionStorage.setItem("token", data.token);
     setUser(decodeToken(data.token));
   }
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function logout() {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setUser(null);
   }
 

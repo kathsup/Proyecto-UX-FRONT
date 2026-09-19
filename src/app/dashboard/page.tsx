@@ -142,7 +142,7 @@ export default function DashboardPage() {
         {stats.map((stat) => (
           <Grid key={stat.label} size={{ xs: 6, sm: 3 }}>
             <Paper sx={{ p: 2, textAlign: "center" }}>
-              <Typography variant="h4" fontWeight={700}>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 {stat.value}
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -210,13 +210,15 @@ export default function DashboardPage() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={!!feedback}
-        autoHideDuration={3000}
-        onClose={() => setFeedback(null)}
-      >
-        {feedback && <Alert severity={feedback.type}>{feedback.msg}</Alert>}
-      </Snackbar>
+      {feedback && (
+        <Snackbar
+          open={Boolean(feedback)}
+          autoHideDuration={3000}
+          onClose={() => setFeedback(null)}
+        >
+          <Alert severity={feedback.type}>{feedback.msg}</Alert>
+        </Snackbar>
+      )}
     </ProtectedRoute>
   );
 }
