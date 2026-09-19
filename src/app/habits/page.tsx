@@ -14,10 +14,11 @@ import Alert from "@mui/material/Alert";
 import ProtectedRoute from "../components/ProtectedRoute";
 import HabitCard from "../components/habits/card";
 import { getHabits, deleteHabit } from "../services/habits.service";
+import type { Habit } from "../types/habits";
 
 export default function HabitsPage() {
   const router = useRouter();
-  const [habits, setHabits] = useState<any[]>([]);
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
@@ -85,13 +86,15 @@ export default function HabitsPage() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={!!feedback}
-        autoHideDuration={3000}
-        onClose={() => setFeedback(null)}
-      >
-        {feedback && <Alert severity={feedback.type}>{feedback.msg}</Alert>}
-      </Snackbar>
+      {feedback && (
+        <Snackbar
+          open={!!feedback}
+          autoHideDuration={3000}
+          onClose={() => setFeedback(null)}
+        >
+          <Alert severity={feedback.type}>{feedback.msg}</Alert>
+        </Snackbar>
+      )}
     </ProtectedRoute>
   );
 }

@@ -1,25 +1,28 @@
 import { apiFetch } from "../lib/api";
-import { HabitForm } from "../components/forms/habitForm";
+import type { Habit, HabitPayload } from "../types/habits";
 
-export async function createHabit(form: typeof HabitForm & { userId: string }) {
+export async function createHabit(data: HabitPayload): Promise<Habit> {
   return apiFetch("/habits", {
     method: "POST",
-    body: JSON.stringify(form),
+    body: JSON.stringify(data),
   });
 }
 
-export async function getHabits() {
+export async function getHabits(): Promise<Habit[]> {
   return apiFetch("/habits");
 }
 
-export async function getHabitById(id: string) {
+export async function getHabitById(id: string): Promise<Habit> {
   return apiFetch(`/habits/${id}`);
 }
 
-export async function updateHabit(id: string, form: Partial<typeof HabitForm>) {
+export async function updateHabit(
+  id: string,
+  data: Partial<HabitPayload>,
+): Promise<Habit> {
   return apiFetch(`/habits/${id}`, {
     method: "PATCH",
-    body: JSON.stringify(form),
+    body: JSON.stringify(data),
   });
 }
 

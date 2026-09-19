@@ -13,7 +13,12 @@ import { registerSchema } from "../lib/validations/auth";
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: " ",
+    email: "",
+    password: "",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,7 +43,7 @@ export default function RegisterPage() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password);
+      await register(form.firstName, form.lastName, form.email, form.password);
       router.push("/dashboard");
     } catch {
       setApiError("No se pudo crear la cuenta. ¿Ya existe ese correo?");
@@ -58,13 +63,25 @@ export default function RegisterPage() {
         Crear cuenta
       </Typography>
       {apiError && <Alert severity="error">{apiError}</Alert>}
-      <TextField
-        label="Nombre completo"
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-        error={!!errors.name}
-        helperText={errors.name}
-      />
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+        <TextField
+          fullWidth
+          label="Nombre"
+          value={form.firstName}
+          onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+          error={!!errors.firstName}
+          helperText={errors.firstName}
+        />
+
+        <TextField
+          fullWidth
+          label="Apellido"
+          value={form.lastName}
+          onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+          error={!!errors.lastName}
+          helperText={errors.lastName}
+        />
+      </Stack>
       <TextField
         label="Correo electrónico"
         value={form.email}

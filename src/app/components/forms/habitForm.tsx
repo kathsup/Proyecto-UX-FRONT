@@ -15,24 +15,24 @@ import {
 } from "@mui/material";
 import { habitSchema } from "@/app/lib/validations/habits";
 import { createHabit, updateHabit } from "@/app/services/habits.service";
-import { useAuth } from "@/app/context/AuthContext";
-
-const predefinedHabits = [
-  { name: "Beber agua", category: "Salud" },
-  { name: "Leer", category: "Educación" },
-  { name: "Caminar", category: "Salud" },
-  { name: "Hacer ejercicio", category: "Salud" },
-];
-
-const categoryOptions = ["Salud", "Educación", "Personal"];
-const frequencyOptions = ["Diaria", "Semanal", "Personalizada"];
-const priorityOptions = ["Alta", "Media", "Baja"];
+import {
+  frequencyOptions,
+  labelByFrequency,
+  unitOptions,
+  periodDaysOptions,
+  categoryOptions,
+  priorityOptions,
+  predefinedHabits,
+} from "@/app/lib/habitOptions";
 
 export type HabitFormValues = {
   name: string;
   description: string;
   category: string;
   frequency: string;
+  targetValue: string;
+  unit: string;
+  periodDays: string;
   priority: string;
   startDate: string;
   endDate: string;
@@ -50,7 +50,6 @@ function toInputDate(value?: string) {
 
 export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
   const isEditing = Boolean(habitId);
-  const { user } = useAuth();
   const router = useRouter();
 
   const [form, setForm] = useState<HabitFormValues>({
@@ -58,6 +57,9 @@ export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
     description: initialValues?.description ?? "",
     category: initialValues?.category ?? "",
     frequency: initialValues?.frequency ?? "",
+    targetValue: String(initialValues?.targetValue ?? "1"), // NUEVO
+    unit: initialValues?.unit ?? "veces", // NUEVO
+    periodDays: String(initialValues?.periodDays ?? ""), // NUEVO
     priority: initialValues?.priority ?? "",
     startDate: toInputDate(initialValues?.startDate),
     endDate: toInputDate(initialValues?.endDate),
@@ -88,7 +90,12 @@ export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
     return {
       name: form.name,
       frequency: form.frequency,
+      targetValue: Number(form.targetValue),
+      unit: form.unit,
       startDate: form.startDate,
+      ...(form.frequency === "custom" && {
+        periodDays: Number(form.periodDays),
+      }),
       ...(form.description && { description: form.description }),
       ...(form.category && { category: form.category }),
       ...(form.priority && { priority: form.priority }),
@@ -105,8 +112,8 @@ export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
     try {
       if (isEditing && habitId) {
         await updateHabit(habitId, buildPayload());
-      } else if (user) {
-        await createHabit({ ...buildPayload(), userId: user.id });
+      } else {
+        await createHabit(buildPayload());
       }
       onSuccess?.();
       router.push("/habits");
@@ -121,7 +128,7 @@ export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
     <Card component="form" onSubmit={handleSubmit} elevation={2}>
       <CardContent>
         <Stack spacing={2}>
-          <Typography variant="h5" fontWeight={600}>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
             {isEditing ? "Editar hábito" : "Nuevo hábito"}
           </Typography>
           {apiError && <Alert severity="error">{apiError}</Alert>}
@@ -132,7 +139,6 @@ export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
               spacing={1}
               sx={{ flexWrap: "wrap", gap: 1 }}
             >
-              {" "}
               {predefinedHabits.map((habit) => (
                 <Button
                   key={habit.name}
@@ -143,6 +149,10 @@ export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
                       ...form,
                       name: habit.name,
                       category: habit.category,
+                      frequency: habit.frequency, // NUEVO
+                      targetValue: habit.targetValue, // NUEVO
+                      unit: habit.unit, // NUEVO
+                      periodDays: "", // NUEVO
                     })
                   }
                 >
@@ -203,6 +213,7 @@ export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
             </Grid>
           </Grid>
 
+          {/* CAMBIO: las opciones ahora son { value, label } */}
           <TextField
             select
             label="Frecuencia"
@@ -212,11 +223,60 @@ export function HabitForm({ habitId, initialValues, onSuccess }: Props) {
             helperText={errors.frequency}
           >
             {frequencyOptions.map((f) => (
-              <MenuItem key={f} value={f}>
-                {f}
+              <MenuItem key={f.value} value={f.value}>
+                {f.label}
               </MenuItem>
             ))}
           </TextField>
+
+          {/* NUEVO: solo aparece si la frecuencia es personalizada */}
+          {form.frequency === "custom" && (
+            <TextField
+              select
+              label="Repetir cada..."
+              value={form.periodDays}
+              onChange={(e) => update("periodDays", e.target.value)}
+              error={!!errors.periodDays}
+              helperText={errors.periodDays}
+            >
+              {periodDaysOptions.map((d) => (
+                <MenuItem key={d} value={String(d)}>
+                  {d} días
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+
+          {/* NUEVO: meta y unidad */}
+          <Grid container spacing={2}>
+            <Grid size={6}>
+              <TextField
+                label={labelByFrequency[form.frequency] ?? "Meta"}
+                type="number"
+                fullWidth
+                value={form.targetValue}
+                onChange={(e) => update("targetValue", e.target.value)}
+                error={!!errors.targetValue}
+                helperText={errors.targetValue}
+                slotProps={{ htmlInput: { min: 1 } }}
+              />
+            </Grid>
+            <Grid size={6}>
+              <TextField
+                select
+                label="Unidad"
+                fullWidth
+                value={form.unit}
+                onChange={(e) => update("unit", e.target.value)}
+              >
+                {unitOptions.map((u) => (
+                  <MenuItem key={u} value={u}>
+                    {u}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          </Grid>
 
           <Grid container spacing={2}>
             <Grid size={6}>

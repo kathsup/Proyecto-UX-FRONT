@@ -135,7 +135,7 @@ export default function DashboardPage() {
           color: "primary.contrastText",
         }}
       >
-        <Typography variant="h5">¡Bienvenid@, {user?.name}!</Typography>
+        <Typography variant="h5">¡Bienvenid@, {user?.firstName}!</Typography>
       </Paper>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>

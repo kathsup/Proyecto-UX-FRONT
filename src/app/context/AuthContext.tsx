@@ -2,11 +2,16 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { apiFetch } from "../lib/api";
 
-type User = { id: string; email: string; name: string };
+type User = { id: string; email: string; firstName: string; lastName: string };
 type AuthContextType = {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+  ) => Promise<void>;
   logout: () => void;
   initializing: boolean; //proteger
 };
@@ -44,10 +49,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(decodeToken(data.token));
   }
 
-  async function register(name: string, email: string, password: string) {
+  async function register(
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+  ) {
     await apiFetch("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ firstName, lastName, email, password }),
     });
     await login(email, password);
   }
