@@ -10,7 +10,7 @@ import HabitStepper from "./HabitStepper";
 import type { Habit } from "../types/habits";
 
 type Props = {
-  habit: Habit;
+  habit: Pick<Habit, "id" | "name" | "targetValue" | "unit">;
   value: number;
   saving?: boolean;
   onChange: (newValue: number) => void;
