@@ -6,9 +6,8 @@ import Paper from "@mui/material/Paper";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import Checkbox from "@mui/material/Checkbox";
 import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
+import Divider from "@mui/material/Divider";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -16,22 +15,19 @@ import DialogActions from "@mui/material/DialogActions";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import ProtectedRoute from "../components/ProtectedRoute";
+import HabitRow from "../components/HabitRow";
 import { useAuth } from "../context/AuthContext";
 import { getHabits, deleteHabit } from "../services/habits.service";
-import {
-  getRecords,
-  createRecord,
-  deleteRecord,
-} from "../services/records.service";
+import { getRecords, upsertRecord } from "../services/records.service";
+import { toDayKey, toLocalDay } from "../lib/dates";
+import type { Habit } from "../types/habits";
+import type { HabitRecord } from "../types/records";
 
-function isToday(dateStr: string) {
-  return new Date(dateStr).toDateString() === new Date().toDateString();
-}
-
-function calculateStreak(daysWithActivity: Set<string>) {
+// Racha: días consecutivos (hasta hoy) con al menos un hábito completado
+function calculateStreak(completedDays: Set<string>) {
   let streak = 0;
   const cursor = new Date();
-  while (daysWithActivity.has(cursor.toDateString())) {
+  while (completedDays.has(toLocalDay(cursor))) {
     streak++;
     cursor.setDate(cursor.getDate() - 1);
   }
@@ -41,56 +37,84 @@ function calculateStreak(daysWithActivity: Set<string>) {
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [habits, setHabits] = useState<any[]>([]);
-  const [records, setRecords] = useState<any[]>([]);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [records, setRecords] = useState<HabitRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     msg: string;
   } | null>(null);
 
+  const today = toLocalDay();
+
   async function loadData() {
     setLoading(true);
-    const [habitsData, recordsData] = await Promise.all([
-      getHabits(),
-      getRecords(),
-    ]);
-    setHabits(habitsData);
-    setRecords(recordsData);
-    setLoading(false);
+    try {
+      const [habitsData, recordsData] = await Promise.all([
+        getHabits(),
+        getRecords(),
+      ]);
+      setHabits(habitsData);
+      setRecords(recordsData);
+    } catch {
+      setFeedback({ type: "error", msg: "No se pudieron cargar los datos" });
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const activeHabits = habits.filter((h) => h.active);
-  const todayRecords = records.filter((r) => isToday(r.date));
-  const completedTodayIds = new Set(todayRecords.map((r) => r.habitId));
-  const completedTodayCount = activeHabits.filter((h) =>
-    completedTodayIds.has(h.id),
-  ).length;
-  const percent =
-    activeHabits.length > 0
-      ? Math.round((completedTodayCount / activeHabits.length) * 100)
-      : 0;
-  const activityDays = new Set(
-    records.map((r) => new Date(r.date).toDateString()),
+  // Hábitos activos que ya empezaron y no han terminado
+  const activeHabits = habits.filter(
+    (h) =>
+      h.active &&
+      toDayKey(h.startDate) <= today &&
+      (!h.endDate || toDayKey(h.endDate) >= today),
   );
-  const streak = calculateStreak(activityDays);
 
-  async function handleToggleCheck(habitId: string) {
-    const existing = todayRecords.find((r) => r.habitId === habitId);
+  const todayRecords = records.filter((r) => toDayKey(r.date) === today);
+  const recordByHabit = new Map(todayRecords.map((r) => [r.habitId, r]));
+
+  const completedTodayCount = activeHabits.filter(
+    (h) => recordByHabit.get(h.id)?.completed,
+  ).length;
+
+  // % del día por cantidad (con capping): suma de min(value, meta) / suma de metas
+  const totalTarget = activeHabits.reduce((sum, h) => sum + h.targetValue, 0);
+  const totalAchieved = activeHabits.reduce(
+    (sum, h) =>
+      sum + Math.min(recordByHabit.get(h.id)?.value ?? 0, h.targetValue),
+    0,
+  );
+  const percent =
+    totalTarget > 0 ? Math.round((totalAchieved / totalTarget) * 100) : 0;
+
+  const completedDays = new Set(
+    records.filter((r) => r.completed).map((r) => toDayKey(r.date)),
+  );
+  const streak = calculateStreak(completedDays);
+
+  async function handleChangeValue(habitId: string, newValue: number) {
+    setSavingId(habitId);
     try {
-      if (existing) {
-        await deleteRecord(existing.id);
-      } else {
-        await createRecord(habitId, new Date().toISOString());
-      }
-      await loadData();
+      const saved = await upsertRecord(habitId, today, newValue);
+      // Reemplaza (o agrega) solo ese record, sin recargar toda la pantalla
+      setRecords((prev) => {
+        const index = prev.findIndex((r) => r.id === saved.id);
+        if (index === -1) return [...prev, saved];
+        const copy = [...prev];
+        copy[index] = saved;
+        return copy;
+      });
     } catch {
       setFeedback({ type: "error", msg: "No se pudo actualizar el hábito" });
+    } finally {
+      setSavingId(null);
     }
   }
 
@@ -127,22 +151,42 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
+      {/* Banner de bienvenida con degradado */}
       <Paper
         sx={{
           p: 3,
           mb: 3,
-          bgcolor: "primary.main",
           color: "primary.contrastText",
+          background:
+            "linear-gradient(135deg, #5B3FD6 0%, #7C5CFA 55%, #A78BFA 100%)",
+          border: "none",
         }}
       >
         <Typography variant="h5">¡Bienvenid@, {user?.firstName}!</Typography>
+        <Typography variant="body2" sx={{ opacity: 0.85, mt: 0.5 }}>
+          {activeHabits.length === 0
+            ? "Crea tu primer hábito para empezar."
+            : `Llevas ${completedTodayCount} de ${activeHabits.length} hábitos completados hoy.`}
+        </Typography>
       </Paper>
 
+      {/* Métricas */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((stat) => (
           <Grid key={stat.label} size={{ xs: 6, sm: 3 }}>
-            <Paper sx={{ p: 2, textAlign: "center" }}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            <Paper
+              sx={{
+                p: 2,
+                textAlign: "center",
+                background: "linear-gradient(135deg, #EDE7FF 0%, #FFFFFF 100%)",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": { transform: "translateY(-3px)" },
+              }}
+            >
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 700, color: "primary.dark" }}
+              >
                 {stat.value}
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -153,51 +197,32 @@ export default function DashboardPage() {
         ))}
       </Grid>
 
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        Hábitos de hoy
-      </Typography>
-      {activeHabits.length === 0 ? (
-        <Typography color="text.secondary">
-          No tienes hábitos activos todavía.
+      {/* Hábitos de hoy: una sola tarjeta con las filas adentro */}
+      <Paper sx={{ p: 2.5, mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          Hábitos de hoy
         </Typography>
-      ) : (
-        activeHabits.map((habit) => (
-          <Paper
-            key={habit.id}
-            sx={{
-              p: 1.5,
-              mb: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-            }}
-          >
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <Checkbox
-                checked={completedTodayIds.has(habit.id)}
-                onChange={() => handleToggleCheck(habit.id)}
+
+        {activeHabits.length === 0 ? (
+          <Typography color="text.secondary">
+            No tienes hábitos activos para hoy.
+          </Typography>
+        ) : (
+          activeHabits.map((habit, index) => (
+            <Box key={habit.id}>
+              {index > 0 && <Divider />}
+              <HabitRow
+                habit={habit}
+                value={recordByHabit.get(habit.id)?.value ?? 0}
+                saving={savingId === habit.id}
+                onChange={(newValue) => handleChangeValue(habit.id, newValue)}
+                onEdit={() => router.push(`/habits/${habit.id}/edit`)}
+                onDelete={() => setHabitToDelete(habit.id)}
               />
-              <Typography>{habit.name}</Typography>
-            </Stack>
-            <Stack direction="row" spacing={1}>
-              <Button
-                size="small"
-                onClick={() => router.push(`/habits/${habit.id}/edit`)}
-              >
-                Editar
-              </Button>
-              <Button
-                size="small"
-                color="error"
-                onClick={() => setHabitToDelete(habit.id)}
-              >
-                Eliminar
-              </Button>
-            </Stack>
-          </Paper>
-        ))
-      )}
+            </Box>
+          ))
+        )}
+      </Paper>
 
       <Dialog open={!!habitToDelete} onClose={() => setHabitToDelete(null)}>
         <DialogTitle>¿Eliminar este hábito?</DialogTitle>
