@@ -13,7 +13,6 @@ const DRAWER_WIDTH = 220;
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Estadísticas", href: "/stats" },
-  { label: "Notas", href: "/notes" },
   { label: "Mis hábitos", href: "/habits" },
 ];
 
