@@ -24,4 +24,12 @@ export type HabitPayload = {
   category?: string;
   priority?: string;
   endDate?: string;
+  active?: boolean;
+};
+
+export type HabitsFilter = {
+  search?: string;
+  category?: string;
+  active?: boolean;
+  sort?: "name" | "priority" | "createdAt";
 };
