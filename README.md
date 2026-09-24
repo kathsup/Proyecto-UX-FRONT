@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Habit Tracker — API
 
-## Getting Started
+Backend del proyecto Habit Tracker, una aplicación para crear, gestionar y dar seguimiento a hábitos y metas personales.
 
-First, run the development server:
+## Tecnologías
 
+- **NestJS** — framework del backend
+- **Prisma** — ORM
+- **MongoDB** — base de datos
+- **JWT** (`jsonwebtoken`) — autenticación
+- **class-validator** — validación de DTOs
+
+## Arquitectura
+
+API REST organizada en módulos: `auth`, `users`, `habits`, `records` y `statistics`. Cada endpoint protegido requiere un token JWT enviado en el header `Authorization: Bearer <token>`, validado por un guard global (`JwtAuthGuard`). Toda entrada de datos pasa por un `ValidationPipe` global que valida los DTOs antes de llegar a los controllers.
+
+## Requisitos previos
+
+- Node.js 
+- Una base de datos MongoDB 
+
+## Instalación
+
+1. Clona el repositorio y entra a la carpeta:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+   cd habit-api
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Instala las dependencias:
+```bash
+   npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Crea un archivo `.env` en la raíz, copiando `.env.example`:
+```bash
+   cp .env.example .env
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Completa las variables en `.env`:
+ Para generar un `JWT_SECRET` seguro:
+```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
-## Learn More
+5. Genera el cliente de Prisma y sincroniza el schema con la base de datos:
+```bash
+   npx prisma generate
+   npx prisma db push
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Ejecución
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm run start:dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+La API queda disponible en `http://localhost:3000`.
 
-## Deploy on Vercel
+## Módulos principales
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Módulo | Endpoints |
+|---|---|
+| `auth` | `POST /auth/register`, `POST /auth/login` |
+| `users` | `GET /users/me` |
+| `habits` | CRUD completo + filtros (`?search=&category=&active=&sort=`) |
+| `records` | Registro diario de hábitos (`PUT /records`), historial, progreso |
+| `statistics` | `GET /statistics/dashboard`, `/overview`, `/heatmap` |
