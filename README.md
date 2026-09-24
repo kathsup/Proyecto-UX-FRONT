@@ -1,67 +1,61 @@
-# Habit Tracker — API
+# Habit Tracker — Frontend
 
-Backend del proyecto Habit Tracker, una aplicación para crear, gestionar y dar seguimiento a hábitos y metas personales.
+Interfaz web del proyecto Habit Tracker, construida con Next.js y Material UI.
 
 ## Tecnologías
 
-- **NestJS** — framework del backend
-- **Prisma** — ORM
-- **MongoDB** — base de datos
-- **JWT** (`jsonwebtoken`) — autenticación
-- **class-validator** — validación de DTOs
+- **Next.js** (App Router)
+- **Material UI (MUI)** — componentes e íconos
+- **MUI X Charts** — gráficas del Dashboard y Estadísticas
+- **TypeScript**
 
 ## Arquitectura
 
-API REST organizada en módulos: `auth`, `users`, `habits`, `records` y `statistics`. Cada endpoint protegido requiere un token JWT enviado en el header `Authorization: Bearer <token>`, validado por un guard global (`JwtAuthGuard`). Toda entrada de datos pasa por un `ValidationPipe` global que valida los DTOs antes de llegar a los controllers.
+Aplicación cliente que consume la API REST del backend (`habit-api`). La sesión se guarda en `sessionStorage` como un token JWT, enviado en cada petición protegida mediante el header `Authorization`. Las rutas dentro de la app están protegidas con un componente `ProtectedRoute`, que redirige a `/login` si no hay sesión activa.
 
 ## Requisitos previos
 
 - Node.js 
-- Una base de datos MongoDB 
+- El backend (`habit-api`) corriendo, ya que el frontend depende de su API
 
 ## Instalación
 
 1. Clona el repositorio y entra a la carpeta:
 ```bash
-   cd habit-api
+   cd habit-tracker-frontend
 ```
 
 2. Instala las dependencias:
 ```bash
-   npm install
-```
-
-3. Crea un archivo `.env` en la raíz, copiando `.env.example`:
-```bash
-   cp .env.example .env
-```
-
-4. Completa las variables en `.env`:
- Para generar un `JWT_SECRET` seguro:
-```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-5. Genera el cliente de Prisma y sincroniza el schema con la base de datos:
-```bash
-   npx prisma generate
-   npx prisma db push
+   pnpm install
 ```
 
 ## Ejecución
 
 ```bash
-pnpm run start:dev
+pnpm run dev
 ```
 
-La API queda disponible en `http://localhost:3000`.
+La app queda disponible en `http://localhost:3001`.
 
-## Módulos principales
+> Asegúrate de que el backend esté corriendo en `http://localhost:3000` antes de iniciar el frontend.
 
-| Módulo | Endpoints |
+## Páginas principales
+
+| Ruta | Descripción |
 |---|---|
-| `auth` | `POST /auth/register`, `POST /auth/login` |
-| `users` | `GET /users/me` |
-| `habits` | CRUD completo + filtros (`?search=&category=&active=&sort=`) |
-| `records` | Registro diario de hábitos (`PUT /records`), historial, progreso |
-| `statistics` | `GET /statistics/dashboard`, `/overview`, `/heatmap` |
+| `/login`, `/register` | Autenticación |
+| `/dashboard` | Resumen del día, hábitos con stepper, gráficas semanal y mensual |
+| `/habits` | Listado, búsqueda, filtros y gestión de hábitos |
+| `/stats` | Estadísticas generales e historial de días completados |
+| `/perfil` | Datos del usuario y resumen de actividad |
+
+## Prueba rápida de punta a punta
+
+1. Regístrate en `/register`.
+2. Inicia sesión.
+3. Crea un hábito desde el botón "Nuevo hábito".
+4. Márcalo con el stepper en el Dashboard.
+5. Verifica que las cifras y gráficas del Dashboard se actualicen.
+6. Revisa Estadísticas y Perfil.
+7. Cierra sesión desde el menú del avatar.
