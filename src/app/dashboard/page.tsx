@@ -152,20 +152,27 @@ export default function DashboardPage() {
         sx={{
           p: 3,
           mb: 3,
-          color: "primary.contrastText",
-          background:
-            "linear-gradient(135deg, #5B3FD6 0%, #7C5CFA 55%, #A78BFA 100%)",
-          border: "none",
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          borderLeft: "5px solid",
+          borderLeftColor: "primary.main",
         }}
       >
-        <Typography variant="h5">¡Bienvenid@, {user?.firstName}!</Typography>
-        <Typography variant="body2" sx={{ opacity: 0.85, mt: 0.5 }}>
-          {stats.activeHabits === 0
-            ? "Crea tu primer hábito para empezar."
-            : `Llevas ${stats.completedToday} de ${stats.activeHabits} hábitos completados hoy.`}
-        </Typography>
+        <Box>
+          <Typography
+            variant="h5"
+            sx={{ color: "primary.dark", fontWeight: 700 }}
+          >
+            ¡Bienvenid@, {user?.firstName}!
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {stats.activeHabits === 0
+              ? "Crea tu primer hábito para empezar."
+              : `Llevas ${stats.completedToday} de ${stats.activeHabits} hábitos completados hoy.`}
+          </Typography>
+        </Box>
       </Paper>
-
       {/* Métricas */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {cards.map((card) => (
@@ -192,8 +199,8 @@ export default function DashboardPage() {
           </Grid>
         ))}
       </Grid>
-
       {/* Hábitos de hoy */}
+
       <Paper sx={{ p: 2.5, mb: 3 }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
           Hábitos de hoy
@@ -222,7 +229,6 @@ export default function DashboardPage() {
 
       {/* Gráficas */}
       <DashboardCharts weekly={stats.weekly} monthly={stats.monthly} />
-
       <Dialog open={!!habitToDelete} onClose={() => setHabitToDelete(null)}>
         <DialogTitle>¿Eliminar este hábito?</DialogTitle>
         <DialogContent>Esta acción no se puede deshacer.</DialogContent>
@@ -233,7 +239,6 @@ export default function DashboardPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
       {feedback && (
         <Snackbar
           open={Boolean(feedback)}

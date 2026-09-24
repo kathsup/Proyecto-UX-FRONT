@@ -16,6 +16,8 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import ProtectedRoute from "../components/ProtectedRoute";
 import HabitCard from "../components/habits/card";
+import Grid from "@mui/material/Grid";
+
 import {
   getHabits,
   deleteHabit,
@@ -157,15 +159,18 @@ export default function HabitsPage() {
           No se encontraron hábitos con esos filtros.
         </Typography>
       ) : (
-        habits.map((habit) => (
-          <HabitCard
-            key={habit.id}
-            habit={habit}
-            onEdit={(id) => router.push(`/habits/${id}/edit`)}
-            onDelete={(id) => setHabitToDelete(id)}
-            onToggleActive={handleToggleActive}
-          />
-        ))
+        <Grid container spacing={2}>
+          {habits.map((habit) => (
+            <Grid key={habit.id} size={{ xs: 12, sm: 6, md: 4 }}>
+              <HabitCard
+                habit={habit}
+                onEdit={(id) => router.push(`/habits/${id}/edit`)}
+                onDelete={(id) => setHabitToDelete(id)}
+                onToggleActive={handleToggleActive}
+              />
+            </Grid>
+          ))}
+        </Grid>
       )}
 
       <Dialog open={!!habitToDelete} onClose={() => setHabitToDelete(null)}>

@@ -6,6 +6,7 @@ import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ThemeProvider } from "@mui/material/styles";
 import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
 import Box from "@mui/material/Box";
 import theme from "./theme";
 import Sidebar from "./components/sidebar";
@@ -53,8 +54,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Dialog
                 open={createModalOpen}
                 onClose={() => setCreateModalOpen(false)}
+                scroll="paper"
+                fullWidth
+                maxWidth="sm"
+                sx={{
+                  "& .MuiDialog-paper": {
+                    borderRadius: 1,
+                    maxHeight: "85vh",
+                  },
+                }}
               >
-                {<HabitForm onSuccess={() => setCreateModalOpen(false)} />}
+                <DialogContent dividers sx={{ p: 3 }}>
+                  <HabitForm onSuccess={() => setCreateModalOpen(false)} />
+                </DialogContent>
               </Dialog>
             </AuthProvider>
           </ThemeProvider>

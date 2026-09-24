@@ -75,12 +75,20 @@ export default function HabitRow({
       {/* Acciones */}
       <Box sx={{ display: "flex", gap: 0.5 }}>
         <Tooltip title="Editar">
-          <IconButton aria-label={`Editar ${habit.name}`} onClick={onEdit}>
+          <IconButton
+            aria-label={`Editar ${habit.name}`}
+            onClick={onEdit}
+            color="primary"
+          >
             <EditOutlinedIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Eliminar">
-          <IconButton aria-label={`Eliminar ${habit.name}`} onClick={onDelete}>
+          <IconButton
+            aria-label={`Eliminar ${habit.name}`}
+            onClick={onDelete}
+            color="error"
+          >
             <DeleteOutlineIcon />
           </IconButton>
         </Tooltip>
